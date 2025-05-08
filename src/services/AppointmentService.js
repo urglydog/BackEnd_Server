@@ -36,4 +36,89 @@ const getAllAppointments = async () => {
   }
 };
 
-export { getAllAppointments };
+// phương thức thêm một appointment, đồng thời thêm cả apointment part
+
+const addAppointment = async (appointmentData) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Insert appointment
+    const [appointmentResult] = await connection.query(
+      `INSERT INTO appointments SET ?`,
+      {
+        customerID: appointmentData.customerType === 'registered' ? appointmentData.customerID : null,
+        guestName: appointmentData.customerType === 'guest' ? appointmentData.guestName : null,
+        guestEmail: appointmentData.customerType === 'guest' ? appointmentData.guestEmail : null,
+        guestPhone: appointmentData.customerType === 'guest' ? appointmentData.guestPhone : null,
+        appointmentDateTime: appointmentData.appointmentDateTime,
+        duration: appointmentData.duration,
+        status: 'pending', // Default status
+        serviceType: appointmentData.serviceType,
+        serviceLocation: appointmentData.serviceLocation,
+        deviceCategory: appointmentData.deviceCategory,
+        isWarrantyService: appointmentData.isWarrantyService ? 1 : 0,
+        warrantyPeriod: appointmentData.isWarrantyService ? appointmentData.warrantyPeriod : null,
+        address: appointmentData.serviceLocation !== 'store' ? appointmentData.address : null,
+        notes: appointmentData.notes,
+        estimatedCost: appointmentData.estimatedCost || null,
+      }
+    );
+
+    const appointmentID = appointmentResult.insertId;
+
+    // Insert parts if they exist
+    if (appointmentData.parts && appointmentData.parts.length > 0) {
+      const partsData = appointmentData.parts.map(part => ({
+        appointmentID,
+        quantity: part.quantity,
+        unitPrice: part.unitPrice,
+        isReplacement: part.isReplacement ? 1 : 0,
+        status: part.status
+      }));
+
+      await connection.query(
+        `INSERT INTO appointment_part (appointmentID, quantity, unitPrice, isReplacement, status) VALUES ?`,
+        [partsData.map(part => [
+          part.appointmentID,
+          part.quantity,
+          part.unitPrice,
+          part.isReplacement,
+          part.status
+        ])]
+      );
+    }
+
+    await connection.commit();
+    
+    return {
+      EM: "Tạo lịch hẹn thành công",
+      EC: 1,
+      DT: {
+        appointmentID,
+        message: "Lịch hẹn và linh kiện đã được thêm thành công"
+      }
+    };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Lỗi khi thêm lịch hẹn:", error);
+    
+    // Handle specific errors
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return {
+        EM: "Không tìm thấy khách hàng với ID đã cung cấp",
+        EC: -2,
+        DT: []
+      };
+    }
+    
+    return {
+      EM: "Lỗi khi thêm lịch hẹn",
+      EC: -1,
+      DT: []
+    };
+  } finally {
+    connection.release();
+  }
+};
+export { getAllAppointments,addAppointment };

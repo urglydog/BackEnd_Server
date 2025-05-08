@@ -22,6 +22,8 @@ import {
   handleGetAllVouchers,
   handleCheckVoucher,
 } from "../controller/VoucherController.js";
+
+import { createAppointment, getAppointments } from "../controller/AppointmentController.js"
 const router = express.Router();
 
 const initApiRoutes = (app) => {
@@ -63,7 +65,17 @@ const initApiRoutes = (app) => {
   //voucherController
   router.get("/voucher/getAllVouchers", handleGetAllVouchers);
   router.post("/voucher/check", handleCheckVoucher);
+
+    //apointmentController
+
+  // POST /api/appointments - Create new appointment
+  router.post("/appointments/create", createAppointment);
+
+  // GET /api/appointments - Get all appointments
+  router.get("/appointments/getAll", getAppointments);
   return app.use("/api/", router);
+
+
 };
 
 export default initApiRoutes;
