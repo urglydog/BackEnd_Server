@@ -29,16 +29,17 @@ const createAppointment = async (req, res) => {
 
     // Validate parts data if exists
     if (req.body.parts) {
-      for (const part of req.body.parts) {
-        if (!part.unitPrice) {
-          return res.status(400).json({
-            EM: "Đơn giá linh kiện là bắt buộc",
-            EC: -1,
-            DT: []
-          });
+        for (const [i, part] of req.body.parts.entries()) {
+          if (part.quantity == null || part.unitPrice == null || part.status == null) {
+            return res.status(400).json({
+              EM: `Linh kiện thứ ${i + 1} thiếu thông tin bắt buộc`,
+              EC: -1,
+              DT: []
+            });
+          }
         }
       }
-    }
+      
 
     const result = await addAppointment(req.body);
     

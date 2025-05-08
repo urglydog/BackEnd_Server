@@ -39,6 +39,7 @@ const getAllAppointments = async () => {
 // phương thức thêm một appointment, đồng thời thêm cả apointment part
 
 const addAppointment = async (appointmentData) => {
+  console.log(appointmentData.parts)
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -77,15 +78,17 @@ const addAppointment = async (appointmentData) => {
         status: part.status
       }));
 
+      const partValues = partsData.map(part => [
+        part.appointmentID,
+        part.quantity,
+        part.unitPrice,
+        part.isReplacement,
+        part.status,
+      ]);
+      
       await connection.query(
         `INSERT INTO appointment_part (appointmentID, quantity, unitPrice, isReplacement, status) VALUES ?`,
-        [partsData.map(part => [
-          part.appointmentID,
-          part.quantity,
-          part.unitPrice,
-          part.isReplacement,
-          part.status
-        ])]
+        [partValues]  // Truyền mảng hai chiều đúng format
       );
     }
 
