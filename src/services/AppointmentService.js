@@ -86,7 +86,7 @@ const addAppointment = async (appointmentData) => {
       ]);
 
       await connection.query(
-        `INSERT INTO appointment_part (appointmentID, quantity, unitPrice, isReplacement, status) VALUES ?`,
+        `INSERT INTO appointment_parts (appointmentID, quantity, unitPrice, isReplacement, status) VALUES ?`,
         [partValues]
       );
     }
