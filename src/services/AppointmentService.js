@@ -37,12 +37,14 @@ const getAllAppointments = async () => {
 };
 
 // phương thức thêm một appointment, đồng thời thêm cả apointment part
-
 const addAppointment = async (appointmentData) => {
-  console.log(appointmentData.parts)
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
+
+    // Tính estimatedArrivalTime = appointmentDateTime + duration (phút)
+    const appointmentDate = new Date(appointmentData.appointmentDateTime);
+    const estimatedArrivalTime = new Date(appointmentDate.getTime() + appointmentData.duration * 60000);
 
     // Insert appointment
     const [appointmentResult] = await connection.query(
@@ -53,8 +55,9 @@ const addAppointment = async (appointmentData) => {
         guestEmail: appointmentData.customerType === 'guest' ? appointmentData.guestEmail : null,
         guestPhone: appointmentData.customerType === 'guest' ? appointmentData.guestPhone : null,
         appointmentDateTime: appointmentData.appointmentDateTime,
+        estimatedArrivalTime: estimatedArrivalTime, // Thêm trường bắt buộc này
         duration: appointmentData.duration,
-        status: 'pending', // Default status
+        status: 'pending',
         serviceType: appointmentData.serviceType,
         serviceLocation: appointmentData.serviceLocation,
         deviceCategory: appointmentData.deviceCategory,
@@ -68,32 +71,24 @@ const addAppointment = async (appointmentData) => {
 
     const appointmentID = appointmentResult.insertId;
 
-    // Insert parts if they exist
+    // Insert parts if provided
     if (appointmentData.parts && appointmentData.parts.length > 0) {
-      const partsData = appointmentData.parts.map(part => ({
+      const partValues = appointmentData.parts.map(part => [
         appointmentID,
-        quantity: part.quantity,
-        unitPrice: part.unitPrice,
-        isReplacement: part.isReplacement ? 1 : 0,
-        status: part.status
-      }));
-
-      const partValues = partsData.map(part => [
-        part.appointmentID,
         part.quantity,
         part.unitPrice,
-        part.isReplacement,
-        part.status,
+        part.isReplacement ? 1 : 0,
+        part.status
       ]);
-      
+
       await connection.query(
         `INSERT INTO appointment_part (appointmentID, quantity, unitPrice, isReplacement, status) VALUES ?`,
-        [partValues]  // Truyền mảng hai chiều đúng format
+        [partValues]
       );
     }
 
     await connection.commit();
-    
+
     return {
       EM: "Tạo lịch hẹn thành công",
       EC: 1,
@@ -105,8 +100,7 @@ const addAppointment = async (appointmentData) => {
   } catch (error) {
     await connection.rollback();
     console.error("Lỗi khi thêm lịch hẹn:", error);
-    
-    // Handle specific errors
+
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return {
         EM: "Không tìm thấy khách hàng với ID đã cung cấp",
@@ -114,7 +108,7 @@ const addAppointment = async (appointmentData) => {
         DT: []
       };
     }
-    
+
     return {
       EM: "Lỗi khi thêm lịch hẹn",
       EC: -1,
@@ -124,4 +118,5 @@ const addAppointment = async (appointmentData) => {
     connection.release();
   }
 };
+
 export { getAllAppointments,addAppointment };
