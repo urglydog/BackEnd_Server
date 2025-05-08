@@ -7,11 +7,12 @@ const getOrdersWithDetails = async () => {
           o.orderID,
           o.orderDate,
           o.totalAmount,
-          c.fullName AS customerName,
-          e.fullName AS employeeName
-      FROM orders o
+		sum(od.quantity) as ToTalQuanTiTy
+		
+      FROM  orders o join orderdetails od on o.orderID = od.orderID join products p on od.productID = p.productID
       JOIN customers c ON o.customerID = c.customerID
       JOIN employees e ON o.employeeID = e.employeeID
+      GROUP BY od.orderID
     `);
 
     return {
