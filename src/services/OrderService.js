@@ -3,16 +3,27 @@ import db from "../config/db.js"; // Đảm bảo bạn đã import db từ file
 const getOrdersWithDetails = async () => {
   try {
     const [rows] = await db.query(`
-      SELECT 
-          o.orderID,
-          o.orderDate,
-          o.totalAmount,
-		sum(od.quantity) as ToTalQuanTiTy
-		
-      FROM  orders o join orderdetails od on o.orderID = od.orderID join products p on od.productID = p.productID
-      JOIN customers c ON o.customerID = c.customerID
-      JOIN employees e ON o.employeeID = e.employeeID
-      GROUP BY od.orderID
+SELECT
+    o.orderID,
+    o.orderDate,
+    o.totalAmount,
+    od.quantity AS ProductQuantity,
+    p.productName,
+    p.description,
+    p.image
+FROM
+    orders o
+JOIN
+    orderdetails od ON o.orderID = od.orderID
+JOIN
+    products p ON od.productID = p.productID
+JOIN
+    customers c ON o.customerID = c.customerID
+JOIN
+    employees e ON o.employeeID = e.employeeID
+   
+ORDER BY
+    o.orderID;
     `);
 
     return {
