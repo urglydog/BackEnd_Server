@@ -1,4 +1,4 @@
-import { addAppointment, getAllAppointments } from "../services/AppointmentService"
+import { addAppointment, getAllAppointments } from "../services/AppointmentService.js"
 
 const createAppointment = async (req, res) => {
   try {
