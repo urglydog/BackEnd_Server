@@ -42,11 +42,15 @@ const addAppointment = async (appointmentData) => {
   try {
     await connection.beginTransaction();
 
-    // Tính estimatedArrivalTime = appointmentDateTime + duration (phút)
-    const appointmentDate = new Date(appointmentData.appointmentDateTime);
-    const estimatedArrivalTime = new Date(appointmentDate.getTime() + appointmentData.duration * 60000);
+    // Ensure estimatedArrivalTime is calculated if not provided
+    let estimatedArrival = appointmentData.estimatedArrivalTime;
+    if (!estimatedArrival) {
+      const appointmentDate = new Date(appointmentData.appointmentDateTime);
+      estimatedArrival = new Date(appointmentDate.getTime() + 
+        appointmentData.duration * 60000).toISOString();
+    }
 
-    // Insert appointment
+    // Insert appointment with the guaranteed estimatedArrivalTime
     const [appointmentResult] = await connection.query(
       `INSERT INTO appointments SET ?`,
       {
@@ -55,7 +59,7 @@ const addAppointment = async (appointmentData) => {
         guestEmail: appointmentData.customerType === 'guest' ? appointmentData.guestEmail : null,
         guestPhone: appointmentData.customerType === 'guest' ? appointmentData.guestPhone : null,
         appointmentDateTime: appointmentData.appointmentDateTime,
-        estimatedArrivalTime: estimatedArrivalTime, // Thêm trường bắt buộc này
+        estimatedArrivalTime: estimatedArrival, // Now guaranteed to have a value
         duration: appointmentData.duration,
         status: 'pending',
         serviceType: appointmentData.serviceType,
