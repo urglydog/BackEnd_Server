@@ -54,13 +54,13 @@ const addAppointment = async (appointmentData) => {
     const [appointmentResult] = await connection.query(
       `INSERT INTO appointments SET ?`,
       {
-        customerID: appointmentData.customerType === 'registered' ? appointmentData.customerID : null,
+        customerID: appointmentData.customerType === 'registered' ? parseInt(appointmentData.customerID) : null,
         guestName: appointmentData.customerType === 'guest' ? appointmentData.guestName : null,
         guestEmail: appointmentData.customerType === 'guest' ? appointmentData.guestEmail : null,
         guestPhone: appointmentData.customerType === 'guest' ? appointmentData.guestPhone : null,
         appointmentDateTime: appointmentData.appointmentDateTime,
         estimatedArrivalTime: estimatedArrival, // Now guaranteed to have a value
-        duration: appointmentData.duration,
+        duration: parseInt(appointmentData.duration),
         status: 'pending',
         serviceType: appointmentData.serviceType,
         serviceLocation: appointmentData.serviceLocation,
@@ -69,7 +69,7 @@ const addAppointment = async (appointmentData) => {
         warrantyPeriod: appointmentData.isWarrantyService ? appointmentData.warrantyPeriod : null,
         address: appointmentData.serviceLocation !== 'store' ? appointmentData.address : null,
         notes: appointmentData.notes,
-        estimatedCost: appointmentData.estimatedCost || null,
+        estimatedCost: parseFloat(appointmentData.estimatedCost) || null,
       }
     );
 
